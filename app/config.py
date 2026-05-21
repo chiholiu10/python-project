@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     cors_origins: List[str] = [
         "http://localhost:3001",
         "https://chiholiu.com",
+        "https://www.chiholiu.com",
     ]
     
     @property
@@ -22,5 +23,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 settings = Settings()

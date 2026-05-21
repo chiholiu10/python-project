@@ -2,8 +2,8 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Optional
 from datetime import datetime
-from config import settings
-from data import SKILLS_DB
+from .config import settings
+from .data import SKILLS_DB
 import random
 
 app = FastAPI(
@@ -35,5 +35,5 @@ async def get_all_skills():
     return {
       "skills": SKILLS_DB,
       "total": len(SKILLS_DB),
-      "timestamp": datetime.now().isoformat
+      "timestamp": datetime.now().isoformat()
     }
