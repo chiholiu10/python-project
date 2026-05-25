@@ -27,7 +27,6 @@ class SkillDB(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -35,7 +34,6 @@ def get_db():
     finally:
         db.close()
 
-# CRUD functies - SQLAlchemy manier
 def get_skill(db, skill_id: int):
     """Haal één skill op basis van ID"""
     return db.query(SkillDB).filter(SkillDB.id == skill_id).first()

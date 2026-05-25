@@ -6,6 +6,9 @@ from .config import settings
 from .database import get_db, SkillDB, get_skill, get_all_skills, update_skill, delete_skill, search_skills_by_demand, get_skills_count
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
 import random
 import os
 
@@ -37,11 +40,16 @@ environment = os.getenv("ENVIRONMENT", "development")
 
 show_docs = environment != "production"
 
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug,
     docs_url="/docs" if show_docs else None, 
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(429, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,6 +58,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SlowAPIMiddleware)
 
 @app.get("/")
 async def root():
@@ -87,16 +97,17 @@ async def create_new_skill(skill: SkillCreate, db: Session = Depends(get_db)):
     )
     return db_skill
 
-@app.get("/debug-db")
-async def debug_db(db: Session = Depends(get_db)):
-    """Debug: check wat er in de database zit"""
-    count = db.query(SkillDB).count()
-    first = db.query(SkillDB).first()
-    return {
-        "count": count,
-        "first_skill": first.name if first else None,
-        "db_path": "skills.db"
-    }
+if settings.environment != "production":
+  @app.get("/debug-db")
+  async def debug_db(db: Session = Depends(get_db)):
+      """Debug: check wat er in de database zit"""
+      count = db.query(SkillDB).count()
+      first = db.query(SkillDB).first()
+      return {
+          "count": count,
+          "first_skill": first.name if first else None,
+          "db_path": "skills.db"
+      }
 
 @app.get("/skills")
 async def get_all_skills_db(
